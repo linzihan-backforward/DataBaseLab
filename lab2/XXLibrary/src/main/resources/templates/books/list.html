@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+ <meta charset="utf-8">
+ <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!--用于解决springboot ajax 提交403错误的错误。  -->
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+<title>库存图书信息</title>
+<!-- Bootstrap core CSS -->
+<link href="asserts/css/bootstrap.min.css"
+	th:href="@{/webjars/bootstrap/css/bootstrap.min.css}" rel="stylesheet">
+
+<link href="asserts/css/dashboard.css"
+	th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+	
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js"
+	th:src="@{/webjars/jquery/jquery.min.js}"></script>
+	
+<script type="text/javascript" 
+	th:src="@{/webjars/popper.js/umd/popper.min.js}"></script>	
+	
+<script type="text/javascript" src="asserts/js/bootstrap.min.js"
+	th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+
+</head>
+
+<body>
+	<!--引入抽取的topbar-->
+	<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+	<div th:replace="commons/bar::topbar"></div>
+
+	<div class="container-fluid">
+		<div class="row">
+			<!--引入侧边栏-->
+			<div th:replace="commons/bar::#sidebar(activeUri='books')"></div>
+
+			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+
+			<h3 class="text-center text-primary ">库存图书列表 </h3>
+			<div class="dropdown">
+			  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" 
+			       th:text="${bycategory}"   aria-haspopup="true" aria-expanded="false">
+			     按照图书类别查询
+			  </button>
+			  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+			  <a class="dropdown-item"  
+			       th:href=@{/books/}>所有类别</a>
+			    <a class="dropdown-item"  th:each="ct:${bookcategory}"  href="#" 
+			       th:href=@{'/books/category/'+${ct.ID}}>[[${ct.title}]]</a>
+			  </div>
+			</div>
+			<div class="table-responsive">
+				<table class="table table-hover table-striped table-sm">
+					<thead>
+						<tr>
+							<th>图书编号</th>
+							<th>书 名</th>
+							<th>借阅状态</th>
+							<th>ISBN</th>
+							<th>类别</th>
+							<th>作者</th>
+							<th>出版社</th>
+							<th>出版时间</th>
+							<th>总页数</th>
+							<th>单价</th>
+							<th>简介</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="book:${booksVO}" th:class="${book.state=='可借阅'?'success':'info'}">
+							<td>[[${book.ID}]]</td>
+							<td>[[${book.title}]]</td>
+							<td>[[${book.state}]]</td>
+							<td>[[${book.isbn}]]</td>
+							<td>[[${book.category}]]</td>
+							<td>[[${book.author}]]</td>
+							<td>[[${book.press}]]</td>
+							<td>[[${book.publishDay}]]</td>
+							<td>[[${book.pages}]]</td>
+							<td>[[${book.price}]]</td>
+							<td>[[${book.intro}]]</td>
+						</tr>
+					</tbody>
+				</table>
+				<nav aria-label="..." th:if="${pagecnt!=0}">
+				  <ul class="pagination">
+				    <li class="page-item " th:classappend="${pageno}==1 ? disabled">
+				      <input type="button" class="page-link"  tabindex="-1" onclick="preclick();"value="&laquo;" />
+				    </li>
+				    <li class="page-item"  th:each="i:${#numbers.sequence(1,pagecnt)}" th:classappend="${pageno == i} ? active"  >
+				       <input type="button"  th:if="${i != pageno}" class="page-link"  onclick="numclick(this);" th:value="${i}"/> 
+				       <span class="page-link"  th:if="${i == pageno}">
+				        [[${i}]] <span id="cur" class="sr-only">[[${i - 1}]]</span>
+				       </span>
+				     </li>
+				    <li class="page-item" th:classappend="${pageno==pagecnt} ? disabled">
+				      <input  class="page-link"  type="button" value="&raquo;" onclick="nextclick();"/>
+				    </li>
+				  </ul>
+				</nav>
+			</div>
+			</main>
+			<form id="deleteReaderForm" method="post">
+				<input type="hidden" name="_method" value="delete" />
+			</form>
+		</div>
+	</div>
+
+	<!-- Bootstrap core JavaScript
+    ================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+
+	<script type="text/javascript">
+	   
+	   	//---用于解决springboot ajax 提交403错误
+		var token = $("meta[name='_csrf']").attr("content");
+		var header = $("meta[name='_csrf_header']").attr("content");
+		$(document).ajaxSend(function(e, xhr, options) {
+		    xhr.setRequestHeader(header, token);
+		});
+	//---结束
+	
+	//上一页
+	  function preclick(){
+	    var ss=window.location.href;
+		
+		var cur=$("#cur").text();
+		
+		if(ss.indexOf("?page=") !=-1) {
+		     ss=ss.replace("?page="+cur,"?page=" + ( parseInt(cur) - 1));
+		     }
+		else {
+		     ss=ss + "?page=" + ( parseInt(cur) -1);
+		     }
+
+		window.location.assign(ss);
+
+		return false;
+		
+	    }
+	  
+	  //下一页 
+	  function nextclick(){
+	    var ss=window.location.href;
+		
+		var cur=$("#cur").text();
+		
+		if(ss.indexOf("?page=") !=-1) {
+		     ss=ss.replace("?page="+cur,"?page=" + (1 + parseInt(cur)));
+		     }
+		else {
+		     ss=ss + "?page=" + (1 + parseInt(cur));
+		     }
+
+		window.location.assign(ss);
+		
+		return false;
+		
+	    }
+	
+	 //跳转到某页
+	 function numclick(obj){
+		//window.location+
+		var ss=window.location.href;
+		
+		var cur=$("#cur").text();
+		
+		if(ss.indexOf("?page=") !=-1) {
+		     ss=ss.replace("?page="+cur,"?page="+ (obj.value - 1));
+		     }
+		else {
+		     ss=ss + "?page=" + (obj.value - 1);
+		     }
+		
+		window.location.assign(ss);
+		return false;
+		}
+		
+	</script>
+</body>
+</html>

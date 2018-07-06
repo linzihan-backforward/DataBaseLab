@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="">
+<meta name="author" content="">
+<!--用于解决springboot ajax 提交403错误的错误。  -->
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+<title>借还书记录查询</title>
+<!-- Bootstrap core CSS -->
+<link href="asserts/css/bootstrap.min.css"
+	th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+<!-- Custom styles for this template -->
+<link th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js"
+	th:src="@{/webjars/jquery/jquery.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js"
+	th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+
+</head>
+
+<body>
+	<!--引入抽取的topbar-->
+	<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+	<div th:replace="commons/bar::topbar"></div>
+
+	<div class="container-fluid">
+		<div class="row">
+			<!--引入侧边栏-->
+			<div th:replace="commons/bar::#sidebar(activeUri='bookfine')"></div>
+
+			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            <h3 class="text-center text-primary">图书借阅逾期罚款登记</h3>  
+            <div class="row"> 
+			<label for="readerid"  class=" control-label">读者的借书证号：</label> 
+			<!-- 用户输入的用户ID作为罚款对象 -->
+			<input class="form-control  col-xs-4 col-sm-4 col-md-3 col-lg-2" required="required"	autofocus="autofocus" id="Userid"  name="User.id" type="text" form="fine_form"> 
+			&nbsp;
+			<input type="button" id="query_btn"	class="btn  btn-primary" onclick="getuser();" value="读取">
+			</div>
+			<br />
+			 &nbsp;读 &nbsp;者 &nbsp;姓 &nbsp;名 &nbsp;：<mark id="username"></mark>
+			<br/><br>
+			<div class="row">
+			<label for="bookid" class=" control-label">输入逾期的图书编号：</label>
+			<input id="bookid" type="text" class="form-control  col-xs-4 col-sm-4 col-md-3 col-lg-2" placeholder="数字格式">
+			&nbsp;
+			<input type="button" id="addbook" class="btn btn-sm btn-primary" onclick="getrecord();" value="读取" />
+			</div>
+			<form th:action="@{/bookfine}" method="post" id="fine_form">
+			<br>
+			<div class="table-responsive">
+				<table class="table table-striped table-sm">
+					<thead>
+						<tr>
+							<th>借书流水号 </th>
+							<th>借书人</th>
+							<th>图书编号</th>
+							<th>书 &nbsp;名</th>
+							<th>借阅状态</th>
+							<th>借出时间</th>
+							<th>最晚归还时间</th>
+							<th>续借次数</th>
+							<th>是否归还</th>
+							<th>逾期天数</th>
+							<th>罚款金额</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+					
+					</tbody>
+				</table>
+				<input type="submit" class="btn btn-info" value="生成罚款单"> 
+			</div>
+			</form>
+			</main>
+		</div>
+	</div>
+
+	<!-- Bootstrap core JavaScript
+    ================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+
+	<script type="text/javascript">
+	
+	var bookids = [];
+	
+	//---用于解决springboot ajax 提交403错误
+	var token = $("meta[name='_csrf']").attr("content");
+	var header = $("meta[name='_csrf_header']").attr("content");
+	$(document).ajaxSend(function(e, xhr, options) {
+	    xhr.setRequestHeader(header, token);
+	});
+	//---结束
+		//得到读者的姓名
+	    function getuser(){
+	       $.get("/reader/" + $("#Userid").val(), 
+					 function(data){
+						 if(data.id=="0000"){
+							 alert("警告: 该读者不存在！");
+							 $("#Userid").val("");
+						 }
+						 else{
+							 $("#username").html(data.name);
+						 }
+			 });
+	    };
+	    
+		//删除本借书记录
+		function deleteSelf(obj,id){
+			var tr=obj.parentNode.parentNode;
+			tr.parentNode.removeChild(tr);
+			//取出此图书编号
+			bookids.splice($.inArray(id, bookids), 1);
+			
+		};
+		//得到一条逾期记录：
+		function getrecord(){
+			var bookid=$("#bookid").val();
+			 
+			 if(bookids.indexOf(bookid) !=-1) 
+				 {
+				 alert("该书已经被加入待还图书列表！");
+				 return ;
+		         }
+			 else bookids.push(bookid);
+			 
+			$.get("/bookreturn/" + bookid, 
+				 function(data){
+				     if(typeof(data.bookID)=="undefined"){
+						 alert("提示： 查不到该书的相应借阅记录" );	 
+					 }else if(data.borrowState != "逾期"){
+					      alert("提示： 没有查到该书的逾期信息" );
+					   }
+					 else{
+ 
+						var t='<tr><td>'
+						       + data.aid + '</td> <td>' +'<input type="hidden" name="borrowovertimeID" value="' + data.aid + '"/>'
+						       + data.readerName +'</td> <td>'
+						       + data.bookID +' </td> <td>'
+						       + data.title + '</td> <td>'
+						       + data.borrowState +'</td> <td>'
+						       + new Date(data.borrowTime).toLocaleDateString() +'</td> <td>'
+						       + new Date(data.overTime).toLocaleDateString() +'</td> <td>'
+						       + data.renewTime  + '</td> <td>'
+						       + data.ifReturned + '</td> <td>'
+						       + Math.floor((new Date() - new Date(data.overTime)) / (1000 * 60 * 60 * 24))+'</td> <td >'
+						       + ' <input  style="width:70px;text-align:right" type="number" name="m_item" value="0" step="0.01">元</td>'
+						       + '<td> <button type="button" class="btn btn-sm btn-danger deleteBtn" onclick="deleteSelf(this,'+data.bookID+');">删 除</button>'
+						       + '</td></tr>';
+
+						 $("tbody").append(t);
+						 } 
+				 });
+			 
+           };
+		
+	</script>
+</body>
+</html>

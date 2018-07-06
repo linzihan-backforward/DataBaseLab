@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+				xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="">
+<meta name="author" content="">
+<!--用于解决springboot ajax 提交403错误的错误。  -->
+<meta name="_csrf" th:content="${_csrf.token}"/>
+<meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+<title>借还书记录查询</title>
+<!-- Bootstrap core CSS -->
+<link href="asserts/css/bootstrap.min.css"
+	th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+<!-- Custom styles for this template -->
+<link th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">
+<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js"
+	th:src="@{/webjars/jquery/jquery.js}"></script>
+<script type="text/javascript" src="asserts/js/bootstrap.min.js"
+	th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+
+</head>
+
+<body>
+	<!--引入抽取的topbar-->
+	<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+	<div th:replace="commons/bar::topbar"></div>
+
+	<div class="container-fluid">
+		<div class="row">
+			<!--引入侧边栏-->
+			<div th:replace="commons/bar::#sidebar(activeUri='bookborrow')"></div>
+
+			<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+
+			<label for="readerid">读者的编号(借书证号)：</label> 
+			<input required="required" readonly="readonly"
+				autofocus="autofocus" id="readerid" type="text"
+				th:value="${userid}"> 
+			<a id="query_btn"
+				class="btn btn-sm btn-success"
+				th:href="@{'/bookborrow/bymyself'}">查询
+			</a> 
+			<label for="fetchall"> 
+			  <span class="label label-info">包含历史借阅记录</span>
+			</label> 
+			<!-- th:checked="${fetchall == true ?'cheed':'c'}" --> 
+			<input
+				id="fetchall" name="fetchall" value='true' type="checkbox" /> 
+			<br />
+			<br />
+			读者姓名：[[${username}]]
+			<div class="table-responsive">
+				<table class="table table-striped table-sm">
+					<thead>
+						<tr>
+							<th>图书编号</th>
+							<th>书 名</th>
+							<th>借阅状态</th>
+							<th>借出时间</th>
+							<th>最晚归还时间</th>
+							<th>续借次数</th>
+							<th>是否归还</th>
+							<th>归还时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="bookBorrow:${bookBorrowsVO}">
+							<td>[[${bookBorrow.bookID}]]</td>
+							<td>[[${bookBorrow.title}]]</td>
+							<td>[[${bookBorrow.borrowState}]]</td>
+							<td
+								th:text="${#dates.format(bookBorrow.borrowTime,'yyyy-MM-dd HH:mm')}"></td>
+							<td
+								th:text="${#dates.format(bookBorrow.overTime,'yyyy-MM-dd HH:mm')}"></td>
+							<td th:text="${bookBorrow.renewTime}"></td>
+							<td th:text="${bookBorrow.ifReturned?'是':'否'}"></td>
+							<td	th:text="${#dates.format(bookBorrow.returnedTime,'yyyy-MM-dd HH:mm')}"></td>
+							<td><button th:if="${bookBorrow.renewTime}<2 and !${bookBorrow.ifReturned}" 
+							       class=" btn btn-sm btn-primary reborrowBtn"  
+								   th:attr="put_uri=@{/bookborrow/}+${bookBorrow.bookID}">续借</button>
+							    <a   th:if="${bookBorrow.borrowState}=='逾期'"
+							       class=" btn btn-sm btn-primary overfineBtn"
+							       th:href="@{/bookfine}">逾期罚款</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- Bootstrap core JavaScript
+    ================================================== -->
+	<!-- Placed at the end of the document so the pages load faster -->
+
+	<script type="text/javascript">
+	
+	//---用于解决springboot ajax 提交403错误
+		var token = $("meta[name='_csrf']").attr("content");
+		var header = $("meta[name='_csrf_header']").attr("content");
+		$(document).ajaxSend(function(e, xhr, options) {
+		    xhr.setRequestHeader(header, token);
+		});
+	//---结束
+	
+		//续借
+		$(".reborrowBtn").click(
+				function() {
+					//续借当前书
+					$.ajax({
+						type:"PUT",
+						url:$(this).attr("put_uri"),
+						success:function(response){
+								alert("续借本书成功！");
+								location.reload();
+								},
+						dataType:"json",
+					});
+				});		
+		
+		$("#readerid").change(
+				function() {
+					var res;
+					if ($("#fetchall").checked)
+						res = "true";
+					else
+						res = "false";
+
+					$("#query_btn").attr(
+							"href",
+							"/bookborrow/byreader/"
+									+ ($(this).val() == '' ? '0000' : $(this).val()) 
+									+ "?fetchall=" + res);
+				});
+
+		$("#fetchall")
+				.change(
+						function() {
+							if (this.checked) {
+								$("#query_btn")
+										.attr(
+												"href",
+												"/bookborrow/bymyself" + "?fetchall=true");
+							} else {
+								$("#query_btn")
+										.attr(
+												"href",
+												"/bookborrow/bymyself" + "?fetchall=false");
+							}
+						});
+	</script>
+</body>
+</html>

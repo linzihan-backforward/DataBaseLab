@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>读者信息</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">		
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/jquery.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+	
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#sidebar(activeUri='bookborrowInput')"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+				
+				
+				 <form  role="form" th:action=@{/bookborrow} method="post">
+				    
+				    <div class="form-group row">
+					    <label for="readerid" class="col-sm-3 control-label align-self-end">读者的编号(借书证号)：</label>
+					    <input id="readerid" name="readerid" type="text" class="form-control col-xs-6 col-sm-6 col-md-4 col-lg-3" required="required">
+					    <button type="button" id="getreader" class="btn btn-success">读借书证信息</button>
+					 </div> 
+					 <div class="form-group row">   
+					          读者姓名：<span id="readername"  class="text-success">XXX</span>
+					           最大可借书数量：<span id="maxbook" class="text-success">XXX</span>
+					           目前已经借书（本）：<span id="curbook" class="text-success">XXX</span>
+					           状态：<span id="readerstate" class="text-success">XXX</span>	
+					  </div>           
+					<div class="form-group row">
+						<label for="bookid" class="col-sm-3 control-label align-self-end">输入图书编号：</label>
+						<input id="bookid" type="text" class="form-control col-xs-6 col-sm-6 col-md-4 col-lg-3" placeholder="数字格式">
+						<button type="button" id="addbook" class="btn btn-primary">加入借书列表</button>
+					</div>
+					<br/>
+					<div class="form-group" id="booklist">
+					    <h3><label for="book">待借图书列表</label></h3>
+				     </div>
+				  <button type="submit" class="btn btn-default">提交</button>
+				</form>
+				</main>
+				<form id="deleteReaderForm"  method="post">
+					<input type="hidden" name="_method" value="delete"/>
+				</form>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+
+		<script type="text/javascript">
+		var selectedbookcnt=0;
+		
+		$("#getreader").click(function(){
+			 $.get("/reader/" + $("#readerid").val(), 
+					 function(data){
+						 if(data.id=="0000"){
+							 alert("警告: 该读者不存在！");
+							 $("#readerid").val("");
+						 }
+						 else{
+							 $("#readername").html(data.name);
+							 $("#maxbook").html(data.checkoutAmount);
+							 $("#readerstate").html(data.state);
+							 $("#curbook").html(data.borrowedBookCnt);
+						 }
+			 });
+			 return false;
+		});
+			$("#addbook").click(function(){
+				 $.get("/bookborrow/selectbook/" + $("#bookid").val(), 
+						 function(data){
+							 if(data.result){
+								 
+								 if(selectedbookcnt+Number($("#curbook").html()) < Number($("#maxbook").html())){
+									 selectedbookcnt = selectedbookcnt+1;
+										//在图书借阅列表中增加一本书
+										 $("#booklist").append('<div class="checkbox"><label><input type="checkbox" checked="checked" name="book" value="'+data.bookid+'">'+data.message + '[' + data.bookid + ']</label></div>')									 
+								 }else{
+									 alert("提示：超出了最大可借图书数量！ ");	 
+								 }
+							 }
+							 else
+								 {
+								 alert("提示： " + data.message);	 
+								 } 
+					 });
+			    			    
+			    return false;
+            });
+
+		</script>
+	</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>还书操作</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">		
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/jquery.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+	
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#sidebar(activeUri='booksin')"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">				
+				    
+					<div class="form-group">
+						<label for="bookisbn" class="col-sm-3 control-label">输入图书ISBN：</label>
+						<input id="bookisbn" type="text" class="form-control col-xs-6 col-sm-6 col-md-4 col-lg-3" placeholder="ISBN">
+						<button type="button" id="addbook" class="btn btn-primary" onclick="getbooklist();">获取图书信息</button>
+					</div>
+					<div class="row">
+					ISBN: <span id="isbn" class="col text-success"></span>
+					书名: <span id="title" class="colb text-success"></span>
+					出版社: <span id="press" class="col text-success"></span>
+					当前库存数量（本）: <span id="bookcnt" class="col text-success"></span>
+					</div>
+					<br/>
+					    
+				<form  class="form-horizontal" role="form" th:action="@{/books/putin}" method="post">
+				  <div class="form-group">
+				    <label for="bookid" class="col-sm-2 control-label">图书编号</label>
+				    <div class="col-sm-10">
+				      <input type="text" class="form-control" id="bookid" name="ID" placeholder="整数类型">
+<!-- 				      <p th:if="${#fields.hasErrors('ID')}" >错误提示</p> -->
+				    </div>
+				  </div>
+				  <div class="form-group">
+				  <label for="bookstate" class="col-sm-2 control-label">图书状态</label>
+				   <div class="col-sm-10">
+		  			  <select  id ="bookstate" name="state.ID" >
+				         <option th:each="state:${bookstates}" th:selected ="${state.ID==1}" th:value="${state.ID}">[[${state.title}]]</option>
+				      </select>
+			       </div>
+				  </div>
+				  <div class="form-group">
+				    <label for="bookname" class="col-sm-2 control-label">书名</label>
+				    <div class="col-sm-10">
+				      <input type="text" required="required" readonly="readonly" class="form-control" id="bookname" name="title">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <label for="bookISBN" class="col-sm-2 control-label">ISBN</label>
+				    <div class="col-sm-10">
+				      <input type="text" required="required" readonly="readonly"class="form-control" id="bookISBN" name="bookList.isbn">
+				    </div>
+				  </div>
+				  
+				  <div class="form-group">
+				    <div class="col-sm-offset-2 col-sm-10">
+				      <button type="submit" class="btn btn-info">保存</button>
+				    </div>
+				  </div>
+				</form>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+
+		<script type="text/javascript">
+		
+        function getbooklist(){
+        	//alert('/books/booklist/'+$("#bookisbn").val());
+        	$.ajax( {url:'/books/booklist/'+$("#bookisbn").val(),
+        			type:'GET',
+        			success:function(data){
+        				$("#isbn").text(data.isbn);
+        				$("#title").text(data.title);
+        				$("#press").text(data.press);
+        				$("#bookcnt").text(data.bookcnt);
+
+        				$("#bookISBN").val(data.isbn);
+        				$("#bookname").val(data.title);
+        				}
+        	});
+        };
+		</script>
+	</body>
+</html>

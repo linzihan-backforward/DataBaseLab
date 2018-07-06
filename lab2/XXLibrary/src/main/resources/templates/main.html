@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+                xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title >主页</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">		
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/jquery.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+	
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#sidebar(activeUri='main')"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+					
+					<div class="jumbotron">
+					  <h1>个人图书信息管理系统</h1>
+					  <p>欢迎使用本图书管理系统  @copyright：Lin zihan</p>
+					  <p th:unless="${#httpServletRequest.remoteUser}"><a class="btn btn-primary btn-lg" href="/login" role="button">登录进入</a></p>
+					  <p th:if="${#httpServletRequest.remoteUser}">登录用户名：
+					  <span class="text-success">[[${#httpServletRequest.remoteUser}]]</span>
+ 					    ，角色：  
+					     <span class="text-success" sec:authorize="hasRole('ADMIN')">管理员 </span>
+				         <span class="text-success" sec:authorize="hasRole('Reader')">一般读者     </span>
+				         <span class="text-success" sec:authorize="hasRole('Reader_VIP')">一般读者     </span>
+				       </p>  
+					</div>
+				</main>
+			</div>
+		</div>
+	</body>
+</html>

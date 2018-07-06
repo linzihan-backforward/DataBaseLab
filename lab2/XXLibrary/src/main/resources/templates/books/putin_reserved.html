@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>还书操作</title>
+		<!-- Bootstrap core CSS -->
+		<link href="asserts/css/bootstrap.min.css" th:href="@{/webjars/bootstrap/css/bootstrap.css}" rel="stylesheet">
+
+		<!-- Custom styles for this template -->
+		<link href="asserts/css/dashboard.css" th:href="@{/asserts/css/dashboard.css}" rel="stylesheet">		
+		<script type="text/javascript" src="asserts/js/jquery-3.2.1.slim.min.js" th:src="@{/webjars/jquery/jquery.js}"></script>
+		<script type="text/javascript" src="asserts/js/bootstrap.min.js" th:src="@{/webjars/bootstrap/js/bootstrap.js}"></script>
+	
+	</head>
+
+	<body>
+		<!--引入抽取的topbar-->
+		<!--模板名：会使用thymeleaf的前后缀配置规则进行解析-->
+		<div th:replace="commons/bar::topbar"></div>
+
+		<div class="container-fluid">
+			<div class="row">
+				<!--引入侧边栏-->
+				<div th:replace="commons/bar::#sidebar(activeUri='booksin')"></div>
+
+				<main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">				
+				    
+					<div class="form-group">
+						<label for="bookisbn" class="col-sm-3 control-label">输入图书ISBN：</label>
+						<input id="bookisbn" type="text" class="form-control col-xs-6 col-sm-6 col-md-4 col-lg-3" placeholder="ISBN">
+						<button type="button" id="addbook" class="btn btn-primary" onclick="getbooklist();">获取图书信息</button>
+					</div>
+					<div class="row">
+					ISBN: <span id="isbn" class="col text-success"></span>
+					书名: <span id="title" class="colb text-success"></span>
+					出版社: <span id="press" class="col text-success"></span>
+					当前库存数量（本）: <span id="bookcnt" class="col text-success"></span>
+					</div>
+					<br/>
+					<table hidden="hidden">
+					 <tbody id="mytbody">
+					       <tr>
+					    	<td><input name="bookList_isbn" type="text" readonly="readonly" th:value="ssssss"></td>
+					    	<td><input name="title" type="text" readonly="readonly" th:value="tttttt"></td>
+					    	<td><input name="id" type="text" ></td>
+					    	<td>
+					    	<select  name="state_ID" >
+						        <option th:each="state:${bookstates}" th:selected ="${state.ID==1}" th:value="${state.ID}">[[${state.title}]]</option>
+						     </select>
+						     </td>
+						     <td> <input type="button" class="btn btn-warning btn-sm" onclick="deleteSelf(this);" value="删除"></td>	 
+					       </tr>
+					   </tbody>
+					  </table>     
+				<form  role="form" th:action="@{/books/putin}" method="post">
+					<div class="form-group" id="booklist">
+					    <h3><label for="book">图书入库数据</label></h3>
+					    <input type="button" class="btn btn-success" onclick="addrow();" value="增加">	
+					    <table class="table table-striped table-sm">
+					    <thead>
+						<tr>
+							<th>ISBN</th>
+							<th>图书名称</th>
+							<th>图书编号</th>
+							<th>图书状态</th>
+							<th>操作</th>
+						</tr>
+					    <tbody id="here">
+					       
+					    	    
+					    </tbody>
+					    </table>
+				     </div>
+				  <button type="submit" class="btn btn-primary">登记</button>
+				</form>
+				</main>
+			</div>
+		</div>
+
+		<!-- Bootstrap core JavaScript
+    ================================================== -->
+		<!-- Placed at the end of the document so the pages load faster -->
+
+		<script type="text/javascript">
+		
+		var isbn,title;
+		
+		function deleteSelf(obj){
+			var tr=obj.parentNode.parentNode;
+			tr.parentNode.removeChild(tr);
+		};
+
+		//添加一行
+		function addrow(){
+			//var node=document.getElementById("mytbody").firstChild;
+			//document.getElementById("here").appendChild(node);
+			//利用字符串来重复生成行（row）部件。
+			$("#here").append($("#mytbody").html().replace("ssssss",isbn).replace("tttttt",title));
+			
+           };
+
+        function getbooklist(){
+        	//alert('/books/booklist/'+$("#bookisbn").val());
+        	$.ajax( {url:'/books/booklist/'+$("#bookisbn").val(),
+        			type:'GET',
+        			success:function(data){
+        				$("#isbn").text(data.isbn);
+        				$("#title").text(data.title);
+        				$("#press").text(data.press);
+        				$("#bookcnt").text(data.bookcnt);
+        				
+        			    //记下此次查询获得的ISBN和书名。
+        				isbn=data.isbn;
+        				title=data.title;
+        				}
+        	});
+        };
+		</script>
+	</body>
+</html>
